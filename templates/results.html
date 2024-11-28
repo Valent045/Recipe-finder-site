@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .recipe-card {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .recipe-image {
+            max-width: 200px;
+            height: auto;
+        }
+        .back-button {
+            margin-bottom: 20px;
+        }
+        .back-button a {
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-button">
+        <a href="/">Back to Search</a>
+    </div>
+    
+    {% for recipe in recipes %}
+    <div class="recipe-card">
+        <h2>{{ recipe.title }}</h2>
+        {% if recipe.image %}
+        <img src="{{ recipe.image }}" alt="{{ recipe.title }}" class="recipe-image">
+        {% endif %}
+        <p>Ready in {{ recipe.readyInMinutes }} minutes</p>
+        <p>Servings: {{ recipe.servings }}</p>
+        {% if recipe.sourceUrl %}
+        <p><a href="{{ recipe.sourceUrl }}" target="_blank">View Full Recipe</a></p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</body>
+</html> 
