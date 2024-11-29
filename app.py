@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-from googletrans import Translator
+import deepl
 
 # Load environment variables
 load_dotenv()
@@ -11,7 +11,11 @@ app = Flask(__name__)
 
 # Get API key from environment variable
 SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')
+DEEPL_API_KEY = os.getenv('DEEPL_API_KEY')    
 BASE_URL = 'https://api.spoonacular.com/recipes'
+translator = deepl.Translator(DEEPL_API_KEY)
+
+print(deepl.__version__)
 
 def search_recipes(query, number=10):
     """
@@ -39,9 +43,8 @@ def translate_to_english(text):
     Translate Russian text to English
     """
     try:
-        translator = Translator()
-        translation = translator.translate(text, src='ru', dest='en')
-        return translation.text
+        result = translator.translate_text(text, source_lang="RU", target_lang="EN-US")
+        return str(result)
     except Exception as e:
         print(f"Translation error: {e}")
         return None
@@ -51,9 +54,8 @@ def translate_to_russian(text):
     Translate English text to Russian
     """
     try:
-        translator = Translator()
-        translation = translator.translate(text, src='en', dest='ru')
-        return translation.text
+        result = translator.translate_text(text, target_lang="RU")
+        return str(result)
     except Exception as e:
         print(f"Translation error: {e}")
         return text  # Return original text if translation fails
