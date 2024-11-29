@@ -86,6 +86,11 @@
 <body>
     <div class="search-container">
         <h1>Recipe Search</h1>
+        {% if error %}
+        <div class="error-message" style="color: red; margin-bottom: 15px;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form action="/search" method="get">
             <input type="text" name="query" placeholder="Enter recipe or ingredient..." required>
             <button type="submit">Search</button>
