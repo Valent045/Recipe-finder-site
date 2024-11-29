@@ -2,20 +2,16 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-import deepl
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Get API key from environment variable
+# API Keys
+YANDEX_API_KEY = os.getenv('YANDEX_API_KEY')
 SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')
-DEEPL_API_KEY = os.getenv('DEEPL_API_KEY')    
 BASE_URL = 'https://api.spoonacular.com/recipes'
-translator = deepl.Translator(DEEPL_API_KEY)
-
-print(deepl.__version__)
 
 def search_recipes(query, number=10):
     """
@@ -23,7 +19,7 @@ def search_recipes(query, number=10):
     """
     endpoint = f'{BASE_URL}/complexSearch'
     params = {
-        'apiKey': SPOONACULAR_API_KEY,
+        'apiKey': SPOONACULAR_API_KEY,  # Replace with your actual API key  
         'query': query,
         'number': number,
         'addRecipeInformation': True,  # Include detailed recipe information
@@ -40,22 +36,44 @@ def search_recipes(query, number=10):
 
 def translate_to_english(text):
     """
-    Translate Russian text to English
+    Translate Russian text to English using Yandex Translate
     """
     try:
-        result = translator.translate_text(text, source_lang="RU", target_lang="EN-US")
-        return str(result)
+        response = requests.post(
+            "https://translate.api.cloud.yandex.net/translate/v2/translate",
+            json={
+                "sourceLanguageCode": "ru",
+                "targetLanguageCode": "en",
+                "texts": [text]
+            },
+            headers={
+                "Authorization": f"Api-Key {YANDEX_API_KEY}"
+            }
+        )
+        response.raise_for_status()
+        return response.json()['translations'][0]['text']
     except Exception as e:
         print(f"Translation error: {e}")
         return None
 
 def translate_to_russian(text):
     """
-    Translate English text to Russian
+    Translate English text to Russian using Yandex Translate
     """
     try:
-        result = translator.translate_text(text, target_lang="RU")
-        return str(result)
+        response = requests.post(
+            "https://translate.api.cloud.yandex.net/translate/v2/translate",
+            json={
+                "sourceLanguageCode": "en",
+                "targetLanguageCode": "ru",
+                "texts": [text]
+            },
+            headers={
+                "Authorization": f"Api-Key {YANDEX_API_KEY}"
+            }
+        )
+        response.raise_for_status()
+        return response.json()['translations'][0]['text']
     except Exception as e:
         print(f"Translation error: {e}")
         return text  # Return original text if translation fails
