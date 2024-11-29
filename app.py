@@ -19,17 +19,20 @@ def search_recipes(query, number=10):
     """
     endpoint = f'{BASE_URL}/complexSearch'
     params = {
-        'apiKey': SPOONACULAR_API_KEY,  # Replace with your actual API key  
+        'apiKey': SPOONACULAR_API_KEY,
         'query': query,
         'number': number,
-        'addRecipeInformation': True,  # Include detailed recipe information
-        'fillIngredients': True        # Include ingredient information
+        'addRecipeInformation': True,
+        'fillIngredients': True
     }
     
     try:
-        response = requests.get(endpoint, params=params)
+        response = requests.get(endpoint, params=params, timeout=10)
         response.raise_for_status()
         return response.json()
+    except requests.exceptions.Timeout:
+        print("Request timed out")
+        return None
     except requests.exceptions.RequestException as e:
         print(f"Error fetching recipes: {e}")
         return None
@@ -111,30 +114,36 @@ def index():
 
 @app.route('/search')
 def search():
-    query = request.args.get('query', '')
+    query = request.args.get('query', '').strip()
     if not query:
-        return jsonify({'error': 'No search query provided'}), 400
+        return render_template('index.html', error="Please enter a search query")
     
-    # Translate query if it's in Russian
-    if any(ord(char) >= 1040 and ord(char) <= 1103 for char in query):
-        translated_query = translate_to_english(query)
-        if translated_query:
+    try:
+        # Translate query if it's in Russian
+        if any(ord(char) >= 1040 and ord(char) <= 1103 for char in query):
+            translated_query = translate_to_english(query)
+            if not translated_query:
+                return render_template('index.html', error="Failed to translate search query")
             query = translated_query
-        else:
-            return jsonify({'error': 'Translation failed'}), 500
+        
+        results = search_recipes(query)
+        if results is None:
+            return render_template('index.html', error="Failed to fetch recipes. Please try again later.")
+        
+        if not results.get('results'):
+            return render_template('index.html', error="No recipes found. Please try a different search term.")
+        
+        # Translate each recipe to Russian
+        translated_results = []
+        for recipe in results['results']:
+            translated_recipe = translate_recipe(recipe)
+            translated_results.append(translated_recipe)
+        
+        return render_template('results.html', recipes=translated_results)
     
-    results = search_recipes(query)
-    if results is None:
-        return jsonify({'error': 'Failed to fetch recipes'}), 500
-    
-    # Translate each recipe to Russian
-    translated_results = []
-    for recipe in results['results']:
-        translated_recipe = translate_recipe(recipe)
-        translated_results.append(translated_recipe)
-    
-    results['results'] = translated_results
-    return render_template('results.html', recipes=results['results'])
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return render_template('index.html', error="An unexpected error occurred. Please try again later.")
 
 if __name__ == '__main__':
     app.run(debug=True) 
